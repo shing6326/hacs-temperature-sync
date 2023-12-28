@@ -1,0 +1,9 @@
+{
+  "domain": "temperature-sync",
+  "name": "Synchronize temperature sensors to the climate current temperature",
+  "documentation": "https://github.com/shing6326/hacs-temperature-sync",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": [],
+  "version": "0.1.0"
+}
