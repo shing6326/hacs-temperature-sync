@@ -3,6 +3,8 @@ import voluptuous as vol
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.components.climate.const import ATTR_CURRENT_TEMPERATURE
+import logging
+_LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "temperature-sync"
 CONFIG_SCHEMA = vol.Schema({
@@ -18,20 +20,22 @@ def setup(hass: HomeAssistant, config: dict):
     """Set up the Temperature Sync component."""
     def handle_temperature_change(event):
         """Handle the temperature change."""
-        # Extract the entity_id of the sensor that triggered the event
         entity_id = event.data.get('entity_id')
         new_state = event.data.get('new_state')
 
-        if new_state is None or entity_id is None or new_state.state == 'unavailable':
-        # Exit silently if there's no new state, no entity ID, or the state is 'unavailable'
+        if new_state is None or entity_id is None:
             return
 
-        # Check if new_state is a non-numeric value
+        # Check if the entity_id is in the sensor list we are monitoring
+        if entity_id not in [pair["sensor"] for pair in pairs]:
+            return
+
+        # Check if the sensor value is ready or not
+        if new_state.state in ['unavailable', 'unknown']:
+            return
         try:
-            # Attempt to convert the state to a float
             new_temperature = float(new_state.state)
         except ValueError:
-            # If conversion fails, log an error and exit the function
             _LOGGER.error("State of %s is not a valid temperature: %s", entity_id, new_state.state)
             return
 
@@ -42,15 +46,13 @@ def setup(hass: HomeAssistant, config: dict):
                 climate_state = hass.states.get(climate_entity_id)
 
                 if climate_state is None:
-                    # If the climate entity does not exist, skip
                     continue
 
-                # Copy existing attributes and update the current_temperature
                 attributes = dict(climate_state.attributes)
                 attributes[ATTR_CURRENT_TEMPERATURE] = new_temperature
 
-                # Update the climate entity's temperature
                 hass.states.set(climate_entity_id, climate_state.state, attributes)
+
 
     pairs = config[DOMAIN]["pairs"]
 
