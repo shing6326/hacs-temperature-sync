@@ -11,7 +11,7 @@ Add the following to your `configuration.yaml` file:
 
 ```yaml
 # Example configuration.yaml entry for the Temperature Sync component
-temperature_sync:
+temperature-sync:
   pairs:
     - sensor: sensor.living_room_temperature  # Replace with your temperature sensor entity ID
       climate: climate.living_room_thermostat  # Replace with your climate entity ID
