@@ -26,20 +26,20 @@ def setup(hass: HomeAssistant, config: dict):
         if new_state is None or entity_id is None:
             return
 
-        # Only proceed if the entity is one of the temperature sensors we're interested in
+        # Check if the entity_id is in the sensor list we are monitoring
         if entity_id not in [pair["sensor"] for pair in pairs]:
             return
 
         # Check if the sensor value is ready or not
         if new_state.state in ['unavailable', 'unknown']:
             return
-
         try:
             new_temperature = float(new_state.state)
         except ValueError:
             _LOGGER.error("State of %s is not a valid temperature: %s", entity_id, new_state.state)
+            return
 
-        # Iterate through each pair to find the corresponding climate entity
+        # Find the corresponding climate entity
         for pair in pairs:
             if pair["sensor"] == entity_id:
                 climate_entity_id = pair["climate"]
@@ -48,19 +48,11 @@ def setup(hass: HomeAssistant, config: dict):
                 if climate_state is None:
                     continue
 
-                # Get the current temperature attribute of the climate entity
-                current_climate_temp = climate_state.attributes.get(ATTR_CURRENT_TEMPERATURE)
+                attributes = dict(climate_state.attributes)
+                attributes[ATTR_CURRENT_TEMPERATURE] = new_temperature
 
-                # Determine if a sync is needed (if the attribute is missing or appears reset)
-                needs_sync = current_climate_temp is None or current_climate_temp != new_temperature
+                hass.states.set(climate_entity_id, climate_state.state, attributes)
 
-                if needs_sync:
-                    # Copy existing attributes and update the current_temperature
-                    attributes = dict(climate_state.attributes)
-                    attributes[ATTR_CURRENT_TEMPERATURE] = new_temperature
-
-                    # Update the climate entity's temperature
-                    hass.states.set(climate_entity_id, climate_state.state, attributes)
 
     pairs = config[DOMAIN]["pairs"]
 
