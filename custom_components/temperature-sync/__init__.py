@@ -8,18 +8,17 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "temperature-sync"
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required("pairs"): vol.All(cv.ensure_list, [{
-            vol.Required("sensor"): cv.entity_id,
-            vol.Required("climate"): cv.entity_id,
-        }]),
-    })
+    DOMAIN: vol.All(cv.ensure_list, [{
+        vol.Required("sensor"): cv.entity_id,
+        vol.Required("climate"): cv.entity_id,
+    }])
 }, extra=vol.ALLOW_EXTRA)
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the Temperature Sync component."""
-    sensor_to_climate_map = {pair["sensor"]: pair["climate"] for pair in config[DOMAIN]["pairs"]}
-    climate_to_sensor_map = {pair["climate"]: pair["sensor"] for pair in config[DOMAIN]["pairs"]}
+    entities = config[DOMAIN]  # Directly accessing the list of entity mappings
+    sensor_to_climate_map = {entity["sensor"]: entity["climate"] for entity in entities}
+    climate_to_sensor_map = {entity["climate"]: entity["sensor"] for entity in entities}
 
     async def handle_temperature_change(event):
         """Handle the temperature change."""
